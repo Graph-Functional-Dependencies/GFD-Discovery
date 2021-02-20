@@ -1,5 +1,6 @@
 import copy
 from Graph import Graph, GFD
+from treelib import Tree, Node
 
 sigma = 5
 class NodeData(object):
@@ -51,7 +52,10 @@ class NodeData(object):
 if __name__ == '__main__':
     k = 5
     G = Graph() # 读入一个图
-    T = None # 用一个根节点root初始化T
+    # 创建空树
+    T = Tree()
+    # 新增根节点，id为'root'，无data
+    T.create_node(identifier='root')
     relations = G.relations
     types = G.types
 
@@ -60,23 +64,40 @@ if __name__ == '__main__':
         gfd = GFD(type)
         node_id = gfd.nodes[0].id
         data = NodeData(gfd, [{node_id:node.id, None:None} for node in nodes])
-        pass # 向T中新增一个节点, 父节点为root, 子节点数据为data
+        # 添加节点，父节点为root，子节点数据为data
+        T.create_node(parent='root', data=data)
     
     for i in range (1, k * k):
-        nodes = [] # 获取第i - 1层的所有节点
+        nodes = [] 
+        # 获取第i - 1层的所有节点
+        for node in T.filter_nodes(lambda x:T.depth(x)==i-1):
+            nodes.append(node)
+        
         if len(nodes) == 0:
             break
         for parent in nodes:
-            parent_data = None # 获取parent节点的数据
+            # 获取parent节点的数据
+            parent_data = parent.data
             for relation in relations:
                 for source in types:
                     for target in types:
                         children_data = parent_data.add_relation(G, source, target, relation)
                         for child_data in children_data:
-                            pass # 向T中新增一个节点, 父节点为parent, 子节点数据为child_data
-        nodes = [] # 获取第i层的所有节点
+                            # 向T中新增一个节点, 父节点为parent, 子节点数据为child_data
+                            T.create_node(parent=parent.identifier, data=child_data)
+                        
+        nodes = []
+        # 获取第i层的所有节点
+        for node in T.filter_nodes(lambda x:T.depth(x)==i):
+            nodes.append(node)
+
         for node1 in nodes:
             for node2 in nodes:
                 if node1 == node2:
-                    pass # 从T中删除node2, 如果不可行, 可以先记录节点id, 遍历结束后再删除
-    results = [] # 获取T的所有不在第0层的叶节点
+                    # 从T中删除node2
+                    T.remove_node(node2.identifier)
+                    
+    results = [] 
+    # 获取T的所有不在第1层的叶节点
+    for node in T.filter_nodes(lambda x:T.depth(x)!=1 and x.is_leaf()):
+        results.append(node)
