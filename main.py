@@ -1,5 +1,6 @@
 import copy
 from Graph import Graph, GFD
+from treelib import Tree
 
 sigma = 5
 class NodeData(object):
@@ -35,23 +36,25 @@ class NodeData(object):
                     l = []
                     for i in range(len(self.maps)):
                         map = self.maps[i]
-                        source_ids_origin, target_ids_origin = graph.find_relation(self.gfd, source_type, map[source_id_gfd], target_type, map[target_id_gfd], relation)
+                        source_ids_origin, target_ids_origin = graph.find_relation(source_type, map[source_id_gfd], target_type, map[target_id_gfd], relation)
                         for source_id_origin, target_id_origin in zip(source_ids_origin, target_ids_origin):
-                            if source_id_origin != None and target_id_origin != None:
-                                l.append((source_id_origin, target_id_origin, i))
+                            l.append((source_id_origin, target_id_origin, i))
                     if len(l) >= sigma:
+                        new_gfd, source_id_new_gfd, target_id_new_gfd = self.gfd.add_relation(source_type, source_id_gfd, target_type, target_id_gfd, relation)
+                        new_maps = []
                         for source_id_origin, target_id_origin, index in l:
-                            new_gfd, source_id_new_gfd, target_id_new_gfd = self.gfd.add_relation(source_type, source_id_gfd, target_type, target_id_gfd, relation)
                             new_map = copy.deepcopy(self.maps[index])
                             new_map[source_id_new_gfd] = source_id_origin
                             new_map[target_id_new_gfd] = target_id_origin
-                            new_nodes.append(NodeData(new_gfd, new_map))
+                            new_maps.append(new_map)
+                        new_nodes.append(NodeData(new_gfd, new_maps))
         return new_nodes
 
 if __name__ == '__main__':
     k = 5
     G = Graph() # 读入一个图
-    T = None # 用一个根节点root初始化T
+    T = Tree()
+    T.create_node(identifier='root')
     relations = G.relations
     types = G.types
 
@@ -60,23 +63,30 @@ if __name__ == '__main__':
         gfd = GFD(type)
         node_id = gfd.nodes[0].id
         data = NodeData(gfd, [{node_id:node.id, None:None} for node in nodes])
-        pass # 向T中新增一个节点, 父节点为root, 子节点数据为data
+        T.create_node(parent='root', data=data)
     
-    for i in range (1, k * k):
-        nodes = [] # 获取第i - 1层的所有节点
+    for i in range (2, k * k + 2):
+        nodes = [] 
+        for node in T.filter_nodes(lambda x:T.depth(x)==i-1):
+            nodes.append(node)
         if len(nodes) == 0:
             break
         for parent in nodes:
-            parent_data = None # 获取parent节点的数据
+            parent_data = parent.data
             for relation in relations:
                 for source in types:
                     for target in types:
                         children_data = parent_data.add_relation(G, source, target, relation)
                         for child_data in children_data:
-                            pass # 向T中新增一个节点, 父节点为parent, 子节点数据为child_data
-        nodes = [] # 获取第i层的所有节点
+                            T.create_node(parent=parent.identifier, data=child_data)
+        nodes = []
+        for node in T.filter_nodes(lambda x:T.depth(x)==i):
+            nodes.append(node)
         for node1 in nodes:
             for node2 in nodes:
-                if node1 == node2:
-                    pass # 从T中删除node2, 如果不可行, 可以先记录节点id, 遍历结束后再删除
-    results = [] # 获取T的所有不在第0层的叶节点
+                if node1.data.gfd == node2.data.gfd:
+                    T.remove_node(node2.identifier)
+                    
+    results = [] 
+    for node in T.filter_nodes(lambda x:T.depth(x)!=1 and x.is_leaf()):
+        results.append(node)
