@@ -1,9 +1,15 @@
 import copy
+from logging import setLoggerClass
+from unittest.case import TestCase
 
 class Node(object):
-    def __init__(self, vert_id:int, node_type:str):  # vert 表示添加的结点
-        self.id = vert_id
+    def __init__(self, node_id:int, node_type:str):  # vert 表示添加的结点
+        self.id = node_id
         self.type = node_type
+    
+    def __repr__(self):
+        return "%s %s"%(self.id,self.type)
+    
 
 class Edge(object):
     def __init__(self, id:int, from_node:Node, to_node:Node, relation:str) -> None:
@@ -12,6 +18,11 @@ class Edge(object):
         self.relation = relation
         self.id = id
 
+    '''
+    def __repr__(self):
+        return "%s %s"%(self.id,self.from_node,self.to_node,self.relation)
+    '''
+
 class Graph(object):
     def __init__(self):
         self.node_list = []  # 初始化点集
@@ -19,6 +30,8 @@ class Graph(object):
         self.node_types = [] # 初始化类型
         self.edges = [] # 初始化边
         self.edge_number = 0
+
+
 
     @property
     def nodes(self) -> list:
@@ -103,13 +116,21 @@ class Graph(object):
         id : int
             新增边的id
         '''
-        if from_node_id not in self.node_list:
+        if from_node_id > len(self.node_list):
             return -1
-        if to_node_id not in self.node_list:
+        if to_node_id > len(self.node_list):
             return -1
+        
+        edges = self.find_edge_by_endpoints(from_node_id, to_node_id)
+        for edge in edges:  
+            if edge.relation == relation:
+                return -1
+        
         self.edge_number = self.edge_number + 1
         edge_id = self.edge_number
-        edge = Edge(edge_id, from_node_id, to_node_id, relation)
+        from_node = self.find_node(from_node_id)
+        to_node = self.find_node(to_node_id)
+        edge = Edge(edge_id, from_node, to_node, relation)
         self.edges.append(edge)
         return edge_id
 
@@ -143,15 +164,14 @@ class Graph(object):
         edges = self.find_edge_by_endpoints(source_id, target_id)
         for edge in edges:
             if edge.from_node.type == source_type and edge.to_node.type == target_type and edge.relation == relation:
-                source_list.append(source_id)
-                target_list.append(target_id)
+                source_list.append(edge.from_node.id)
+                target_list.append(edge.to_node.id)
         
         return source_list, target_list
 
     def find_node_by_type(self, type: str) -> list:
         '''
         根据type查询节点
-
         参数
         ----
         type : str
@@ -165,7 +185,7 @@ class Graph(object):
         nodes = []
         for node in self.node_list:
             if node.type == type:
-                nodes.append(type)
+                nodes.append(node)
         return nodes
 
 class GFD(Graph):
@@ -189,7 +209,6 @@ class GFD(Graph):
             目的节点的id
         relation : str
             要添加的关系类别
-
         返回值
         ------
         new_gfd : GFD
@@ -210,7 +229,6 @@ class GFD(Graph):
     def has_relation(self, relation:str, source_id:int, target_id:int) -> bool:
         '''
         查询指定的关系是否存在
-
         参数
         ----
         relation : str
@@ -219,7 +237,6 @@ class GFD(Graph):
             源节点id
         target_id : int
             目的节点id
-
         返回值
         ------
         has : bool
