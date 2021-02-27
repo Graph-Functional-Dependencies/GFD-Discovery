@@ -1,6 +1,7 @@
 import copy
 from Graph import Graph, GFD
 from treelib import Tree
+import pandas as pd
 
 sigma = 5
 class NodeData(object):
@@ -52,7 +53,17 @@ class NodeData(object):
 
 if __name__ == '__main__':
     k = 5
-    G = Graph() # 读入一个图
+    G = Graph()
+    nodeData = pd.read_csv('dataset/cora/node.csv')
+    edgeData = pd.read_csv('dataset/cora/newEdge.csv')
+    # 加点
+    for i in range(nodeData.shape[0]):
+        row = nodeData.loc[i]
+        G.add_node(row['nodeType'])
+    # 加边
+    for i in range(edgeData.shape[0]):
+        row = edgeData.loc[i]
+        G.add_edge(row['sourceID'],row['targetID'],row['edgeType'])
     T = Tree()
     T.create_node(identifier='root')
     relations = G.relations
