@@ -171,6 +171,7 @@ class Graph(object):
     def find_node_by_type(self, type: str) -> list:
         '''
         根据type查询节点
+        
         参数
         ----
         type : str
@@ -208,6 +209,7 @@ class GFD(Graph):
             目的节点的id
         relation : str
             要添加的关系类别
+
         返回值
         ------
         new_gfd : GFD
@@ -217,10 +219,11 @@ class GFD(Graph):
         target_id : int
             目的节点id
         '''
+        new_gfd = copy.deepcopy(self)
         if source_id is None:
-            source_id = self.add_node(source_type)
+            source_id = new_gfd.add_node(source_type)
         if target_id is None:
-            target_id = self.add_node(target_type)
+            target_id = new_gfd.add_node(target_type)
         new_gfd = copy.deepcopy(self)
         new_gfd.add_edge(source_id, target_id, relation)
         return new_gfd, source_id, target_id
@@ -236,12 +239,15 @@ class GFD(Graph):
             源节点id
         target_id : int
             目的节点id
+
         返回值
         ------
         has : bool
             true, 有这样一个关系存在
             false, 没有这样一个关系
         '''
+        if source_id is None and target_id is None:
+            return True
         if source_id is None or target_id is None:
             return False
         edges = self.find_edge_by_endpoints(source_id, target_id)
@@ -251,5 +257,5 @@ class GFD(Graph):
         return False
 
     def __eq__(self, o: object) -> bool:
-        # TODO 重写
+        # TODO 重写, 判断两个GFD等价
         pass

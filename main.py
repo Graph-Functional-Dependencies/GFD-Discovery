@@ -16,10 +16,14 @@ class NodeData(object):
 
         参数
         ----
-        graph : 原图
-        source_type : 源节点的type
-        target_type : 目的节点的type
-        relation : 关系类别
+        graph : Graph
+            原图
+        source_type : str
+            源节点的type
+        target_type : str
+            目的节点的type
+        relation : str
+            关系类别
         
         返回值
         ------
@@ -27,12 +31,23 @@ class NodeData(object):
             一个包含所有可行子节点数据的列表
         '''
         new_nodes = []
-        source_ids_gfd = self.gfd.find_node_by_type(source_type)
-        source_ids_gfd.append(None)
-        target_ids_gfd = self.gfd.find_node_by_type(target_type)
-        target_ids_gfd.append(None)
-        for source_id_gfd in source_ids_gfd:
-            for target_id_gfd in target_ids_gfd:
+        sources_gfd = self.gfd.find_node_by_type(source_type)
+        sources_gfd.append(None)
+        targets_gfd = self.gfd.find_node_by_type(target_type)
+        targets_gfd.append(None)
+        for source_gfd in sources_gfd:
+            for target_gfd in targets_gfd:
+
+                if source_gfd is None:
+                    source_id_gfd = None
+                else:
+                    source_id_gfd = source_gfd.id
+
+                if target_gfd is None:
+                    target_id_gfd = None
+                else:
+                    target_id_gfd = target_gfd.id
+
                 if not self.gfd.has_relation(relation, source_id_gfd, target_id_gfd):
                     l = []
                     for i in range(len(self.maps)):
@@ -101,3 +116,7 @@ if __name__ == '__main__':
     results = [] 
     for node in T.filter_nodes(lambda x:T.depth(x)!=1 and x.is_leaf()):
         results.append(node)
+    
+    for result in results:
+        for map in result.data.maps:
+            print(map)
