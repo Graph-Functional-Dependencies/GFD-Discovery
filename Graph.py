@@ -6,10 +6,9 @@ class Node(object):
     def __init__(self, node_id:int, node_type:str):  # vert 表示添加的结点
         self.id = node_id
         self.type = node_type
-    
+        
     def __repr__(self):
         return "%s %s"%(self.id,self.type)
-    
 
 class Edge(object):
     def __init__(self, id:int, from_node:Node, to_node:Node, relation:str) -> None:

@@ -54,8 +54,8 @@ class NodeData(object):
 if __name__ == '__main__':
     k = 5
     G = Graph()
-    nodeData = pd.read_csv('dataset/cora/node.csv')
-    edgeData = pd.read_csv('dataset/cora/newEdge.csv')
+    nodeData = pd.read_csv('dataset/diy/node.csv')
+    edgeData = pd.read_csv('dataset/diy/edge.csv')
     # 加点
     for i in range(nodeData.shape[0]):
         row = nodeData.loc[i]
