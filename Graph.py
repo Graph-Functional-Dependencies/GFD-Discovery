@@ -246,6 +246,7 @@ class GFD(Graph):
             true, 有这样一个关系存在
             false, 没有这样一个关系
         '''
+        # 为什么都为空时返回true
         if source_id is None and target_id is None:
             return True
         if source_id is None or target_id is None:
@@ -256,6 +257,39 @@ class GFD(Graph):
                 return True
         return False
 
+    def newNodesAndEdges(self):
+        # node 重新排序
+        selfNodeList = self.nodes
+        new_selfNodeList = sorted(selfNodeList, key=lambda x: x.type)
+        selfNodeIDMap = {}
+        # 构建映射ID map
+        for index in range(len(new_selfNodeList)):
+            selfNodeIDMap[new_selfNodeList[index].id] = index
+        # 将edges中各条边的起始点id替换掉
+        new_selfEdgeList = []
+        for edge in self.edges:
+            new_selfEdgeList.append(Edge(edge.id, Node(selfNodeIDMap[edge.from_node.id], edge.from_node.type),
+                                          Node(selfNodeIDMap[edge.to_node.id], edge.to_node.type), edge.relation))
+        new_selfEdgeList.sort(key = lambda x:(x.from_node.id, x.to_node.id))
+        return new_selfNodeList, new_selfEdgeList
+
     def __eq__(self, o: object) -> bool:
-        # TODO 重写, 判断两个GFD等价
-        pass
+        if isinstance(o, self.__class__):
+            new_otherNodeList, new_otherEdgeList = o.newNodesAndEdges()
+            new_myNodeList, new_myEdgeList = self.newNodesAndEdges()
+            if (len(new_myNodeList) != len(new_otherNodeList)) or (len(new_myEdgeList) != len(new_otherEdgeList)):
+                return False
+            # 比较点的type
+            for i in range(len(new_myNodeList)):
+                if new_myNodeList[i].type != new_otherNodeList[i].type:
+                    return False
+            # 比较边的relation
+            for i in range(len(new_myEdgeList)):
+                if new_myEdgeList[i].relation != new_otherNodeList[i].relation:
+                    return False
+            return True
+        else:
+            return False
+
+    def __repr__(self):
+        return "点的数目为 %s 边的数目为 %s 点的类型为%s 边的类型为%s"%(len(self.nodes),len(self.edges),self.types, self.relations)

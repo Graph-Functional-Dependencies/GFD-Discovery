@@ -2,8 +2,9 @@ import copy
 from Graph import Graph, GFD
 from treelib import Tree
 import pandas as pd
+import time
 
-sigma = 5
+sigma = 1
 class NodeData(object):
     
     def __init__(self, gfd:GFD, maps:list) -> None:
@@ -66,8 +67,10 @@ class NodeData(object):
                         new_nodes.append(NodeData(new_gfd, new_maps))
         return new_nodes
 
+
 if __name__ == '__main__':
-    k = 5
+    start = time.perf_counter()
+    k = 2
     G = Graph()
     nodeData = pd.read_csv('dataset/diy/node.csv')
     edgeData = pd.read_csv('dataset/diy/edge.csv')
@@ -90,8 +93,8 @@ if __name__ == '__main__':
         node_id = gfd.nodes[0].id
         data = NodeData(gfd, [{node_id:node.id, None:None} for node in nodes])
         T.create_node(parent='root', data=data)
-    
-    for i in range (2, k * k + 2):
+
+    for i in range (2, k*k+2):
         nodes = [] 
         for node in T.filter_nodes(lambda x:T.depth(x)==i-1):
             nodes.append(node)
@@ -105,18 +108,34 @@ if __name__ == '__main__':
                         children_data = parent_data.add_relation(G, source, target, relation)
                         for child_data in children_data:
                             T.create_node(parent=parent.identifier, data=child_data)
+        T.show()
         nodes = []
         for node in T.filter_nodes(lambda x:T.depth(x)==i):
             nodes.append(node)
-        for node1 in nodes:
-            for node2 in nodes:
-                if node1.data.gfd == node2.data.gfd:
-                    T.remove_node(node2.identifier)
-                    
-    results = [] 
-    for node in T.filter_nodes(lambda x:T.depth(x)!=1 and x.is_leaf()):
+        # 全部的gfd集合与identifier集合
+        identifiers = []
+        gfds = []
+        for node in nodes:
+            identifiers.append(node.identifier)
+            gfds.append(node.data.gfd)
+        # 应该保留的gfd集合与identifier集合
+        unique_gfds = []
+        unique_identifiers = []
+        for index in range(len(nodes)):
+            if nodes[index].data.gfd not in unique_gfds:
+                unique_gfds.append(nodes[index].data.gfd)
+                unique_identifiers.append(identifiers[index])
+        for identifier in identifiers:
+            if identifier not in unique_identifiers:
+                T.remove_node(identifier)
+
+    results = []
+    for node in T.filter_nodes(lambda x:T.depth(x) !=1 and x.is_leaf()):
         results.append(node)
-    
     for result in results:
+        print(result.data.gfd)
+        print(result.data.gfd.nodes)
         for map in result.data.maps:
             print(map)
+    end = time.perf_counter()
+    print("Running time: %s Seconds" %(end-start))
