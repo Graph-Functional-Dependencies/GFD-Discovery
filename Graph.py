@@ -224,7 +224,7 @@ class GFD(Graph):
             source_id = new_gfd.add_node(source_type)
         if target_id is None:
             target_id = new_gfd.add_node(target_type)
-        new_gfd = copy.deepcopy(self)
+        # new_gfd = copy.deepcopy(self)
         new_gfd.add_edge(source_id, target_id, relation)
         return new_gfd, source_id, target_id
 
@@ -258,6 +258,13 @@ class GFD(Graph):
         return False
 
     def newNodesAndEdges(self):
+        """
+        利用节点的type对节点进行重新排序，产生重排后的NodeList和EdgeList
+        returns
+        ------
+        new_selfNodeList:重新排序后的节点列表
+        new_selfEdgeList：重新排序后的边列表，第一排序依据为from_node，第二排序依据为to_node
+        """
         # node 重新排序
         selfNodeList = self.nodes
         new_selfNodeList = sorted(selfNodeList, key=lambda x: x.type)
@@ -274,6 +281,14 @@ class GFD(Graph):
         return new_selfNodeList, new_selfEdgeList
 
     def __eq__(self, o: object) -> bool:
+        """
+        利用前面的辅助函数newNodesAndEdges来判断连个GFD是否等价
+        若两个GFD的newNodeList中每个点的type相同  AND  NewEdgeList中每条边的relation也相同，便认为等价
+        returns
+        ------
+        True :表示2个GFD等价
+        False:不等价
+        """
         if isinstance(o, self.__class__):
             new_otherNodeList, new_otherEdgeList = o.newNodesAndEdges()
             new_myNodeList, new_myEdgeList = self.newNodesAndEdges()
@@ -285,7 +300,7 @@ class GFD(Graph):
                     return False
             # 比较边的relation
             for i in range(len(new_myEdgeList)):
-                if new_myEdgeList[i].relation != new_otherNodeList[i].relation:
+                if new_myEdgeList[i].relation != new_otherEdgeList[i].relation:
                     return False
             return True
         else:

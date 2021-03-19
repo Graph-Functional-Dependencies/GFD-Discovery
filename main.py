@@ -4,7 +4,7 @@ from treelib import Tree
 import pandas as pd
 import time
 
-sigma = 1
+sigma = 2
 class NodeData(object):
     
     def __init__(self, gfd:GFD, maps:list) -> None:
@@ -56,6 +56,7 @@ class NodeData(object):
                         source_ids_origin, target_ids_origin = graph.find_relation(source_type, map[source_id_gfd], target_type, map[target_id_gfd], relation)
                         for source_id_origin, target_id_origin in zip(source_ids_origin, target_ids_origin):
                             l.append((source_id_origin, target_id_origin, i))
+                    # 每条新增边的阈值要求
                     if len(l) >= sigma:
                         new_gfd, source_id_new_gfd, target_id_new_gfd = self.gfd.add_relation(source_type, source_id_gfd, target_type, target_id_gfd, relation)
                         new_maps = []
@@ -63,8 +64,13 @@ class NodeData(object):
                             new_map = copy.deepcopy(self.maps[index])
                             new_map[source_id_new_gfd] = source_id_origin
                             new_map[target_id_new_gfd] = target_id_origin
+                            # 若map的value中有重复值，则此map不合法，舍去
+                            if len(new_map.values()) != len(set(new_map.values())):
+                                continue
                             new_maps.append(new_map)
-                        new_nodes.append(NodeData(new_gfd, new_maps))
+                        # GFD整体的maps阈值要求
+                        if len(new_maps) >= sigma:
+                            new_nodes.append(NodeData(new_gfd, new_maps))
         return new_nodes
 
 
@@ -72,8 +78,8 @@ if __name__ == '__main__':
     start = time.perf_counter()
     k = 2
     G = Graph()
-    nodeData = pd.read_csv('dataset/diy/node.csv')
-    edgeData = pd.read_csv('dataset/diy/edge.csv')
+    nodeData = pd.read_csv('dataset/diy/more_node.csv')
+    edgeData = pd.read_csv('dataset/diy/more_edge.csv')
     # 加点
     for i in range(nodeData.shape[0]):
         row = nodeData.loc[i]
@@ -94,7 +100,7 @@ if __name__ == '__main__':
         data = NodeData(gfd, [{node_id:node.id, None:None} for node in nodes])
         T.create_node(parent='root', data=data)
 
-    for i in range (2, k*k+2):
+    for i in range (2, 4):
         nodes = [] 
         for node in T.filter_nodes(lambda x:T.depth(x)==i-1):
             nodes.append(node)
@@ -103,11 +109,12 @@ if __name__ == '__main__':
         for parent in nodes:
             parent_data = parent.data
             for relation in relations:
-                for source in types:
-                    for target in types:
-                        children_data = parent_data.add_relation(G, source, target, relation)
-                        for child_data in children_data:
-                            T.create_node(parent=parent.identifier, data=child_data)
+                    for source in types:
+                        for target in types:
+                            # 得到所有可能的子NodeData
+                            children_data = parent_data.add_relation(G, source, target, relation)
+                            for child_data in children_data:
+                                T.create_node(parent=parent.identifier, data=child_data)
         T.show()
         nodes = []
         for node in T.filter_nodes(lambda x:T.depth(x)==i):
@@ -128,14 +135,19 @@ if __name__ == '__main__':
         for identifier in identifiers:
             if identifier not in unique_identifiers:
                 T.remove_node(identifier)
+        # for gfd in unique_gfds:
+        #     print("下面展示去重后的结果")
+        #     print(gfd)
+        #     print("展示完毕")
 
+    # 挖掘结束
     results = []
     for node in T.filter_nodes(lambda x:T.depth(x) !=1 and x.is_leaf()):
         results.append(node)
+    print("下面展示挖掘出的GFD")
     for result in results:
         print(result.data.gfd)
         print(result.data.gfd.nodes)
-        for map in result.data.maps:
-            print(map)
+        print(result.data.maps)
     end = time.perf_counter()
     print("Running time: %s Seconds" %(end-start))
